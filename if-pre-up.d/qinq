@@ -1,0 +1,53 @@
+#!/bin/sh -efu
+
+if [ -z "${IFACE:-}" ]; then
+    echo "No IFACE value is set" >&2
+    exit 1
+fi
+
+# Use qinq_trunk_port parameter as a flag determining if this
+# script should be executed.
+[ -n "${IF_QINQ_TRUNK_IFACE:-}" ] || exit 0
+
+case "$IFACE" in
+    *.*.*)
+        vlans="${IFACE#*.}"
+        IF_QINQ_SERVICE_VLAN="${vlans%%.*}"
+        IF_QINQ_CUSTOMER_VLAN="${vlans##*.}"
+
+        if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
+            IF_QINQ_SERVICE_IFACE="${IFACE%%.*}.$IF_QINQ_SERVICE_VLAN"
+        fi
+        ;;
+esac
+
+if [ -z "${IF_QINQ_SERVICE_VLAN:-}" ]; then
+    echo "Service VLAN ID is not set. Use the \"name.ID1.ID2\" interface naming scheme or specify the \"qinq_service_vlan\" configuration parameter value" >&2
+    exit 1
+fi
+
+if [ -z "${IF_QINQ_CUSTOMER_VLAN:-}" ]; then
+    echo "Customer VLAN ID is not set. Use the \"name.ID1.ID2\" interface naming scheme or specify the \"qinq_customer_vlan\" configuration parameter value" >&2
+    exit 1
+fi
+
+if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
+    echo "Service VLAN interface name is not set. Use the \"name.ID1.ID2\" interface naming scheme or specify the \"qinq_service_iface\" configuration parameter value" >&2
+    exit 1
+fi
+
+[ -n "${IF_QINQ_SERVICE_PROTO:-}" ] || IF_QINQ_SERVICE_PROTO="802.1ad"
+
+echo "Adding service VLAN interface $IF_QINQ_SERVICE_IFACE with VLAN ID ${IF_QINQ_SERVICE_VLAN}..." >&2
+ip link add link "$IF_QINQ_TRUNK_IFACE" "$IF_QINQ_SERVICE_IFACE" type vlan proto "$IF_QINQ_SERVICE_PROTO" id "$IF_QINQ_SERVICE_VLAN"
+
+[ -n "${IF_QINQ_CUSTOMER_PROTO:-}" ] || IF_QINQ_CUSTOMER_PROTO="802.1Q"
+
+echo "Adding customer VLAN interface $IFACE with VLAN ID ${IF_QINQ_CUSTOMER_VLAN}..." >&2
+ip link add link "$IF_QINQ_SERVICE_IFACE" "$IFACE" type vlan proto "$IF_QINQ_CUSTOMER_PROTO" id "$IF_QINQ_CUSTOMER_VLAN"
+
+echo "Bringing up the trunk interface ${IF_QINQ_TRUNK_IFACE}..." >&2
+ip link set "$IF_QINQ_TRUNK_IFACE" up
+
+echo "Bringing up the service VLAN interface ${IF_QINQ_SERVICE_IFACE}..." >&2
+ip link set "$IF_QINQ_SERVICE_IFACE" up

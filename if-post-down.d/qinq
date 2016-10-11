@@ -1,0 +1,33 @@
+#!/bin/sh -efu
+
+if [ -z "${IFACE:-}" ]; then
+    echo "No IFACE value is set" >&2
+    exit 1
+fi
+
+# Use qinq_trunk_port parameter as a flag determining if this
+# script should be executed.
+[ -n "${IF_QINQ_TRUNK_IFACE:-}" ] || exit 0
+
+case "$IFACE" in
+    *.*.*)
+        if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
+            IF_QINQ_SERVICE_IFACE="${IFACE%%.*}.$IF_QINQ_SERVICE_VLAN"
+        fi
+        ;;
+esac
+
+if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
+    echo "Service VLAN interface name is not set. Use the \"name.ID1.ID2\" interface naming scheme or specify the \"qinq_service_iface\" configuration parameter value" >&2
+    exit 1
+fi
+
+echo "Removing customer VLAN interface ${IFACE}..." >&2
+ip link del "$IFACE" type vlan
+
+echo "Bringing down and removing the service VLAN interface ${IF_QINQ_SERVICE_IFACE}..." >&2
+ip link set "$IF_QINQ_SERVICE_IFACE" down
+ip link del "$IF_QINQ_SERVICE_IFACE" type vlan
+
+echo "Bringing down the trunk interface ${IF_QINQ_TRUNK_IFACE}..." >&2
+ip link set "$IF_QINQ_TRUNK_IFACE" down
