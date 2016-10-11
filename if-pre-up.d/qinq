@@ -43,6 +43,10 @@ ip link add link "$IF_QINQ_TRUNK_IFACE" "$IF_QINQ_SERVICE_IFACE" type vlan proto
 
 [ -n "${IF_QINQ_CUSTOMER_PROTO:-}" ] || IF_QINQ_CUSTOMER_PROTO="802.1Q"
 
+if ip link show "$IFACE" 1>/dev/null 2>/dev/null; then
+    ip link del "$IFACE"
+fi
+
 echo "Adding customer VLAN interface $IFACE with VLAN ID ${IF_QINQ_CUSTOMER_VLAN}..." >&2
 ip link add link "$IF_QINQ_SERVICE_IFACE" "$IFACE" type vlan proto "$IF_QINQ_CUSTOMER_PROTO" id "$IF_QINQ_CUSTOMER_VLAN"
 

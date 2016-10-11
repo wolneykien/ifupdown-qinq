@@ -11,6 +11,9 @@ fi
 
 case "$IFACE" in
     *.*.*)
+        vlans="${IFACE#*.}"
+        IF_QINQ_SERVICE_VLAN="${vlans%%.*}"
+        
         if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
             IF_QINQ_SERVICE_IFACE="${IFACE%%.*}.$IF_QINQ_SERVICE_VLAN"
         fi
@@ -22,12 +25,9 @@ if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
     exit 1
 fi
 
-echo "Removing customer VLAN interface ${IFACE}..." >&2
-ip link del "$IFACE" type vlan
-
 echo "Bringing down and removing the service VLAN interface ${IF_QINQ_SERVICE_IFACE}..." >&2
 ip link set "$IF_QINQ_SERVICE_IFACE" down
-ip link del "$IF_QINQ_SERVICE_IFACE" type vlan
+ip link del "$IF_QINQ_SERVICE_IFACE"
 
 echo "Bringing down the trunk interface ${IF_QINQ_TRUNK_IFACE}..." >&2
 ip link set "$IF_QINQ_TRUNK_IFACE" down
