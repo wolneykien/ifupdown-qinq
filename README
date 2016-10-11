@@ -1,0 +1,14 @@
+Configuration options for Q-in-Q VLANs (802.1ad) in `/etc/network/interfaces` file
+==================================================================================
+
+This extension provides support for configuring double-tagged Q-in-Q (802.1ad)
+VLANs on network interfaces.
+
+Example
+-------
+
+    iface eth0.24.371 inet static
+        ...
+        qinq_trunk_iface eth0
+
+See `qinq.5.md` file for more information.
