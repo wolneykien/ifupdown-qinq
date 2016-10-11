@@ -1,0 +1,12 @@
+Source: ifupdown-qinq
+Section: contrib
+Priority: extra
+Maintainer: Paul Wolneykien <p.wolneykien@metrotek.spb.ru>
+Build-Depends: debhelper:all (>= 9.0.0), dh-autoreconf:all, ruby-ronn:all
+Standards-Version: 3.9.2
+Homepage: https://github.com/wolneykien/ifupdown-qinq
+
+Package: ifupdown-qinq
+Architecture: all
+Depends: ${misc:Depends}, iproute2
+Description: A set of /etc/network/if-*.d scripts bringing the support for Q-in-Q (802.1ad) double-tagged VLAN interfaces.

@@ -1,0 +1,5 @@
+ifupdown-qinq (0.1.0-1) etn; urgency=low
+
+  * The initial version.
+
+ -- Paul Wolneykien <p.wolneykien@metrotek.spb.ru>  Tue, 11 Oct 2016 12:49:00 +0300
