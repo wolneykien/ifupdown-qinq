@@ -8,7 +8,5 @@ Example
 -------
 
     iface eth0.24.371 inet static
-        ...
-        qinq_trunk_iface eth0
 
 See `qinq.5.md` file for more information.

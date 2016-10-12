@@ -5,8 +5,6 @@ SYNOPSIS
 --------
 
     iface eth0.24.371 inet static
-        ...
-        qinq_trunk_iface eth0
 
 
 DESCRIPTION
@@ -18,8 +16,9 @@ VLANs on network interfaces.
 Parameters:
 
   *  `qinq_trunk_iface`:
-  The name of the base (raw) network interface. This parameter also
-  acts as a flog telling the `qiniq` script to run for the interface.
+  The name of the base (raw) network interface. If `name.ID1.ID2`
+  scheme is used for the interface name then this parameter is
+  redundant but can be used to override the calculated name.
   
   * `qinq_service_vlan`:
   The service VLAN ID. If `name.ID1.ID2` scheme is used for the
@@ -34,7 +33,7 @@ Parameters:
   The name of the virtual interface to be created for the service VLAN
   ID tag. If `name.ID1.ID2` scheme is used for the interface name then
   this parameter is redundant but can be used to override the
-  interface calculated name.
+  calculated name.
   
   * `qinq_service_proto`:
   The name of the VLAN protocol to be used when configuring the

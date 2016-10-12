@@ -8,20 +8,24 @@ if [ -z "${IFACE:-}" ]; then
     exit 1
 fi
 
-# Use qinq_trunk_port parameter as a flag determining if this
-# script should be executed.
-[ -n "${IF_QINQ_TRUNK_IFACE:-}" ] || exit 0
-
 case "$IFACE" in
     *.*.*)
         vlans="${IFACE#*.}"
         IF_QINQ_SERVICE_VLAN="${vlans%%.*}"
+
+        if [ -z "${IF_QINQ_TRUNK_IFACE:-}" ]; then
+            IF_QINQ_TRUNK_IFACE="${IFACE%%.*}"
+        fi
         
         if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
             IF_QINQ_SERVICE_IFACE="${IFACE%%.*}.$IF_QINQ_SERVICE_VLAN"
         fi
         ;;
 esac
+
+# Use qinq_trunk_port parameter as a flag determining if this
+# script should be executed.
+[ -n "${IF_QINQ_TRUNK_IFACE:-}" ] || exit 0
 
 if [ -z "${IF_QINQ_SERVICE_IFACE:-}" ]; then
     echo "Service VLAN interface name is not set. Use the \"name.ID1.ID2\" interface naming scheme or specify the \"qinq_service_iface\" configuration parameter value" >&2
