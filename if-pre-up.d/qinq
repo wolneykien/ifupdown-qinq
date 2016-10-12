@@ -45,8 +45,12 @@ fi
 
 [ -n "${IF_QINQ_SERVICE_PROTO:-}" ] || IF_QINQ_SERVICE_PROTO="802.1ad"
 
+if [ -z "${IF_HW_MAC_ADDRESS:-}" -a -n "${IF_HWADDRESS:-}" ]; then
+    IF_HW_MAC_ADDRESS="$IF_HWADDRESS"
+fi
+
 echo "Adding service VLAN interface $IF_QINQ_SERVICE_IFACE with VLAN ID ${IF_QINQ_SERVICE_VLAN}..." >&2
-ip link add link "$IF_QINQ_TRUNK_IFACE" "$IF_QINQ_SERVICE_IFACE" type vlan proto "$IF_QINQ_SERVICE_PROTO" id "$IF_QINQ_SERVICE_VLAN"
+ip link add link "$IF_QINQ_TRUNK_IFACE" "$IF_QINQ_SERVICE_IFACE" ${IF_HW_MAC_ADDRESS:+ address "$IF_HW_MAC_ADDRESS"} type vlan proto "$IF_QINQ_SERVICE_PROTO" id "$IF_QINQ_SERVICE_VLAN"
 
 [ -n "${IF_QINQ_CUSTOMER_PROTO:-}" ] || IF_QINQ_CUSTOMER_PROTO="802.1Q"
 
@@ -55,10 +59,22 @@ if ip link show "$IFACE" 1>/dev/null 2>/dev/null; then
 fi
 
 echo "Adding customer VLAN interface $IFACE with VLAN ID ${IF_QINQ_CUSTOMER_VLAN}..." >&2
-ip link add link "$IF_QINQ_SERVICE_IFACE" "$IFACE" type vlan proto "$IF_QINQ_CUSTOMER_PROTO" id "$IF_QINQ_CUSTOMER_VLAN"
+ip link add link "$IF_QINQ_SERVICE_IFACE" "$IFACE" ${IF_HW_MAC_ADDRESS:+ address "$IF_HW_MAC_ADDRESS"} type vlan proto "$IF_QINQ_CUSTOMER_PROTO" id "$IF_QINQ_CUSTOMER_VLAN"
+
+if [ -n "${IF_HW_MAC_ADDRESS:-}" ]; then
+    current_mac="$(ip -o link show dev "$IF_QINQ_TRUNK_IFACE" | sed -e 's/^.*link\/ether[[:space:]]\+\([^[:space:]]\+\)[[:space:]].*$/\1/' | tr '[[:upper:]]' '[[:lower:]]')"
+    new_mac="$(echo $IF_HW_MAC_ADDRESS | tr '[[:upper:]]' '[[:lower:]]')"
+    if [ "$current_mac" != "$new_mac" ]; then
+        echo "Changing the MAC-address of the trunk interface..." >&2
+        if ip -o link show dev "$IF_QINQ_TRUNK_IFACE" | grep -q 'UP'; then
+            ip link set dev "$IF_QINQ_TRUNK_IFACE" down
+        fi
+        ip link set dev "$IF_QINQ_TRUNK_IFACE" address "$IF_HW_MAC_ADDRESS"
+    fi
+fi
 
 echo "Bringing up the trunk interface ${IF_QINQ_TRUNK_IFACE}..." >&2
-ip link set "$IF_QINQ_TRUNK_IFACE" up
+ip link set dev "$IF_QINQ_TRUNK_IFACE" up
 
 echo "Bringing up the service VLAN interface ${IF_QINQ_SERVICE_IFACE}..." >&2
-ip link set "$IF_QINQ_SERVICE_IFACE" up
+ip link set dev "$IF_QINQ_SERVICE_IFACE" up
